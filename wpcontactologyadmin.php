@@ -2,7 +2,7 @@
 /*
  Plugin Name: WP Contactology Admin
  Description: Creates account creation and management system for Contactology. Branched from WP Cakemail 0.91. Customized for All Star Cheer Sites
- Version: 0.92
+ Version: 0.921
  Author: Jeremy Ferguson
  */
  
@@ -49,7 +49,7 @@ class WP_Contactology_Admin {
 		// Initiate settings object
 		if (class_exists("WP_Contactology_Settings")) 
 			$this->Settings = new WP_Contactology_Settings();
-		
+		//setup admin API key
 		$this->Settings->get_options();
 		$this->api_key = $this->Settings->options['contactology_api_key'];
 		
@@ -96,7 +96,7 @@ class WP_Contactology_Admin {
 				
 				break;
 			//copy the folder that was set
-			case 'copy_folder':
+			case 'copy_trigger':
 				
 				$response['message'] = $this->copy_trigger( $_POST ) ;
 				
@@ -124,8 +124,7 @@ class WP_Contactology_Admin {
 	
 	function client_setup( $_POST ) {
 		 
-		$campaign_list = $this->c->Campaign_Find();
-		
+		//$campaign_list = $this->c->Campaign_Find();
 			
 		//gather data for new client
 		$clientName = $_POST['client_name'];
@@ -135,52 +134,58 @@ class WP_Contactology_Admin {
 		$optionalParameters = array( 
 			'accountType' => 'BLOCK_SENDS'
 		);
-
-		//create new client
-		$campaign_list = $this->c_admin->Admin_Create_Account_Minimal( $clientName, $adminEmail, $userName,  $password, $optionalParameters );
+		
+		//create new client, checking for exceptions
+		try { 
+			$campaign_list = $this->c_admin->Admin_Create_Account_Minimal( $clientName, $adminEmail, $userName,  $password, $optionalParameters );
+		}
+		catch(Exception $e) {
+			$campaign_list = $e->getMessage();
+		}
+		
+		return $campaign_list;
 	}
 	
 	/**
 	 * get account list with API keys and return checkbox list
-	 * TODO: Workout multiple select box + list processing
+	 * 
 	 * @author Jeremy Ferguson
 	 * @package wpcntlgy
 	 * @since 0.92
 	 * @return $apikey_list_output
 	**/
 	
-	function account_checklist(  ) {	
-	
-		$account_list = $this->c_admin->Admin_Get_Accounts();
+	function account_checklist(  ) {
+
+		//get account checklist, catch exceptions
+		try { 
+			$account_list = $this->c_admin->Admin_Get_Accounts();
+		}
+		catch(Exception $e) {
+			return $e->getMessage();
+		}
 		
 		$apikey_array = array();
 		
-		$apikey_list_output = '<select id="wp_contactology_admin_client" name="wp_contactology_admin_client">';
-		
-		$apikey_list_output .= '<option value="0">Select a Client</option>';
-		
-		
+		$apikey_list_output .= '<div id="wp_contactology_current_client_checklist">';
 		
 		foreach( $account_list as $clientID => $clientName ) {
-		
 			$apikey_array[$clientID] = $this->c_admin->Admin_Get_Account_Key( $clientID );
 			
-		//	$apikey_list .= "<input type='checkbox' name='clientapikey' value='{$account_keys[$clientID]}' /> ";
-		//	$apikey_list .= $clientName . '<br/>';
-		
-			$apikey_list_output .= '<option value="'. $apikey_array[$clientID] .'">' . $clientName . '</option>';
+			$apikey_list_output .= "<div class='{$apikey_array[$clientID]}'>";
 			
+			$apikey_list_output .= "<input type='checkbox' name='clientapikey' value='{$apikey_array[$clientID]}' id='{$apikey_array[$clientID]}'/> ";
+			$apikey_list_output .= "<input type='hidden' name='clientid' value='{$clientID}' /> ";
+			$apikey_list_output .= "<label for='{$apikey_array[$clientID]}'>$clientName</label></div>";
 		}
-		
-		$apikey_list_output .= '</select>';
 		
 		return $apikey_list_output;
 		
 	}
 	
 	/**
-	 * Get active mailing lists and return as select list
-	 *
+	 * Get active mailing lists and return as select dropdown
+	 * 
 	 * @author Jeremy Ferguson
 	 * @package wpcntlgy
 	 * @since 0.92
@@ -188,43 +193,106 @@ class WP_Contactology_Admin {
 	function get_lists( $_POST ) {
 		
 		if ( class_exists('Contactology') ) 
-			$c_current = new Contactology( $_POST['client'] );
+			$c_current = new Contactology( $_POST['api_key'] );
 			
 		$active_lists = $c_current->List_Get_Active_Lists();
-				
+		
+		$response .= ' <select>';
 		//make an option out of each one
 		foreach($active_lists as $list) {
-			
 			$response .= '<option value="'. $list['listId'] .'">' . $list['name'] . '</option>';
 		}
+		$response .= '</select>';
 		
+		//add feedback icons
+		$response .='<span class="success" style="display:none;"><img src="/wp-admin/images/yes.png" /> </span>';
+		$response .= '<span class="fail" style="display:none;"><img src="/wp-admin/images/no.png" />  </span>';
+					
+				
 		return $response;
 	}
 
 
 	/**
 	 * Copy campaign
-	 * TODO : Finish copy newsletter logic
+	 *
 	 * @author Jeremy Ferguson
 	 * @package wpcntlgy
 	 * @since 0.9
 	**/
 	function copy_trigger( $_POST ) {
-	
-	
+		
 		//gather the variables from $_POST
 		$campaign_id = $_POST['folder_id'];
 		$campaign_name = $_POST['folder_name'];
-		$client_id = $_POST['client'];
-		$list_id = $_POST['list'];
+		$client_apikey = $_POST['client_apikey'];
+		$client_id = $_POST['client_id'];
+		$listId = $_POST['list'];
 	
-		/**Logic that takes list of selected newsletter category and each post as a new trigger using API.. One foreach that assembles list and another that copies it out?
+		//create object with selected API key
+		$Contactology_Object = new Contactology( $client_apikey );
 		
-		*/
+		//get account details for sender data 
+		$account_details = $this->c_admin->Admin_Get_Account_Info( $client_id );
 		
-		return 'you did it!';
+		//get campaign details and custom fields
+		$campaign_details = wp_get_single_post( $campaign_id );
+		$custom_fields = get_post_custom( $campaign_id );
+				
+		//Copy trigger, catch exceptions
+		try { 
+			
+			$Contactology_Object->Campaign_Create_Triggered_On_List_Subscription( 
+				$listId, 
+				$custom_fields['_wpcntctlgyadmin_timeType'][0],
+				$custom_fields['_wpcntctlgyadmin_timeValue'][0],
+				$campaign_details->post_title,
+				$custom_fields['_wpcntctlgyadmin_subject'][0], 
+				$account_details['adminEmail'],
+				$account_details['clientBusinessName'],	
+				array( 'html' => apply_filters( 'the_content',$campaign_details->post_content ) )
+			);
+			
+		}
+		catch(Exception $e) {
+			return 'Fail &mdash; ' . $e->getMessage();
+		}
+		
+		return 'Success';
 	}
+	
+	/**
+	 * Assemble campaign select menu
+	 *
+	 * @author Jeremy Ferguson
+	 * @package wpcntlgy
+	 * @since 0.921
+	 * @return $campaign_select
+	**/
+	function campaign_select() {
+		$campaign_select .= '<select id="wp_contactology_admin_campaigns" name="wp_contactology_admin_campaigns">';
+		$campaign_select .= '<option value="0">Select a Folder</option>';
 		
+		$args = ( array( 
+			'post_type' => 'campaign',
+			'posts_per_page' => -1,
+			'orderby' => 'title',
+			'order' => 'ASC'
+		));
+		
+		$campaign_query = new WP_Query( $args );
+		
+		while ( $campaign_query->have_posts() ) : $campaign_query->the_post();
+
+			$campaign_select .= '<option value="' . get_the_ID() . '">' . get_the_title() . '</option>';
+			
+		endwhile;
+		
+		wp_reset_postdata();
+		
+		$campaign_select .= '</select>';
+		return $campaign_select;
+	}
 	
 	/**
 	 * register javascript file
@@ -262,7 +330,7 @@ class WP_Contactology_Admin {
 	
 	/**
 	 * create admin panel
-	 *
+	 * 
 	 * @author Jeremy Ferguson
 	 * @package wpcntlgy
 	 * @since 0.9
@@ -275,12 +343,11 @@ class WP_Contactology_Admin {
 		
 		//get the account checklist to use in the forms
 		$account_checklist = $this->account_checklist();
-		
-		//krumo($account_checklist);
-		
+		//get the campaign dropdown menu
+		$campaign_select = $this->campaign_select();
 ?>		
 		<h3>Create new account:</h3>
-		<form>
+		<form id="wp_contactology_client_setup_form">
 			<ul>
 				<li><label for="wp_contactology_admin_client_name">Client Name</label><br/>
 				
@@ -303,7 +370,7 @@ class WP_Contactology_Admin {
 					<input id="wp_contactology_admin_password" name="wp_contactology_admin_password" />
 				</li>
 				<li>
-					<input type="submit" id="wp_contactology_new_client_submit" value="Create Account" />
+					<button id="wp_contactology_new_client_submit">Create Account</button>
 					<div id="loading" style="display:none; width:100%; height:100%; ">
 						<p><img src="/wp-admin/images/loading.gif" /> Please Wait</p>
 					</div>
@@ -313,46 +380,28 @@ class WP_Contactology_Admin {
 		</form>
 		
 		<h3>Copy Autoresponders</h3>
-		<form>
+		<form id="wp_contactology_copy_trigger_form">
 			<ul>
-				<li><label for="fname">Select Folder to Copy: </label><br/>
-				
-					<select id="wp_contactology_admin_folder" name="wp_contactology_admin_folder">
-						<option value='0'>Select a Folder</option>
-					<?php 
-//						foreach($folder_list['campaigns'] as $folder) {
-							echo '<option value="'. $folder['id'] .'">Post Type folders will display here</option>';
-							
-//						}
+				<li><label for="fname">Select campaign to copy: </label><br/>
+					<?php echo $campaign_select; ?>
 					
-					?>
-					</select>
 				
 				</li>
-				<li><label for="fname">Select Client to Receive Folder: </label><br/>
-				
+				<li><label for="fname">Select client to receive campaign, then select list to copy folder to:</label><br/>
 					<?php echo $account_checklist; ?>
 					
-				
-				</li>
-				<li><label for="fname">Select List to Assign Folder: </label><br/>
-				
-					<select id="wp_contactology_admin_list" name="wp_contactology_admin_list" disabled="true">
-						<option value='0'>Select a List</option>
-						
-					</select>
-				
 				</li>
 				<li>
-					<input type="submit" id="wp_contactology_copy_folder_submit" value="Copy" />
+					<button id="wp_contactology_copy_trigger_submit">Copy</button>
 					<div id="loading" style="display:none; width:100%; height:100%; ">
 						<p><img src="/wp-admin/images/loading.gif" /> Please Wait</p>
 					</div>
+					<div id="wp_contactology_copy_trigger_results"></div>
 				</li>
 			</ul>
 		</form>
-		<div id="wp_contactology_admin_results"></div>
-
+		
+		<div><strong>Please reload this page after each campaign copy!</strong></div>
 <?php 
 	}
 	
@@ -515,7 +564,7 @@ class WP_Contactology_Settings {
 	
 	/**
 	 * handle admin ajax logic
-	 * NOT CURRENTLY IN USE
+	 * TODO - Add 
 	 * @author Jeremy Ferguson
 	 * @package wpdbsb
 	 * @since 0.8
