@@ -2,7 +2,7 @@
 /*
  Plugin Name: WP Contactology Admin
  Description: Creates account creation and management system for Contactology. Branched from WP Cakemail 0.91. Customized for All Star Cheer Sites
- Version: 0.921
+ Version: 0.922
  Author: Jeremy Ferguson
  */
  
@@ -101,6 +101,12 @@ class WP_Contactology_Admin {
 				$response['message'] = $this->copy_trigger( $_POST ) ;
 				
 				break;
+				
+			case 'activate_account':
+				
+				$response['message'] = $this->activate_account( $_POST ) ;
+				
+				break;
 		}
 		
 		$arr = $response;
@@ -181,6 +187,39 @@ class WP_Contactology_Admin {
 		
 		return $apikey_list_output;
 		
+	}
+	
+	/**
+	 * get account list with API keys and return select list
+	 * 
+	 * @author Jeremy Ferguson
+	 * @package wpcntlgy
+	 * @since 0.922
+	 * @return $apikey_list_output
+	**/
+	
+	function account_select(  ) {
+		//get account list, catch exceptions
+		try { 
+			$account_list = $this->c_admin->Admin_Get_Accounts();
+		}
+		catch(Exception $e) {
+			return $e->getMessage();
+		}
+		
+		$apikey_array = array();
+		
+		$apikey_list_output = '<select id="wp_contactology_admin_client_to_activate" name="wp_contactology_admin_client_to_activate">';
+		
+		$apikey_list_output .= '<option value="0">Select a Client</option>';
+		
+		foreach( $account_list as $clientID => $clientName ) {
+			$apikey_list_output .= "<option value='{$clientID}'>{$clientName}</option>";
+		}
+		
+		$apikey_list_output .= '</select>';
+		
+		return $apikey_list_output;
 	}
 	
 	/**
@@ -295,6 +334,34 @@ class WP_Contactology_Admin {
 	}
 	
 	/**
+	 * Activate account by switching from block send to contact quota
+	 *
+	 * @author Jeremy Ferguson
+	 * @package wpcntlgy
+	 * @since 0.922
+	 * @return $campaign_select
+	**/
+	function activate_account( $_POST ) {
+		
+		//gather the variables from $_POST
+		$client_apikey = $_POST['client_apikey'];
+		$client_id = $_POST['client_id'];
+				
+		//get account checklist, catch exceptions
+		try { 
+			$results = $this->c_admin->Admin_Change_Account_Type($client_id, 'CONTACT_QUOTA');
+			
+			$results .= $this->c_admin->Admin_Change_Account_Contact_Quota($client_id, 100);
+			
+		}
+		catch(Exception $e) {
+			return $e->getMessage();
+		}
+		
+		return 'Account successfully activated';
+	}
+	
+	/**
 	 * register javascript file
 	 *
 	 * @author Jeremy Ferguson
@@ -343,6 +410,9 @@ class WP_Contactology_Admin {
 		
 		//get the account checklist to use in the forms
 		$account_checklist = $this->account_checklist();
+		$account_select = $this->account_select();
+		
+		
 		//get the campaign dropdown menu
 		$campaign_select = $this->campaign_select();
 ?>		
@@ -375,6 +445,23 @@ class WP_Contactology_Admin {
 						<p><img src="/wp-admin/images/loading.gif" /> Please Wait</p>
 					</div>
 					<div id="wp_contactology_client_setup_results"></div>
+				</li>
+			</ul>
+		</form>
+		
+		<h3>Activate Account</h3>
+		<form id="wp_contactology_activate_account_form">
+			<ul>
+				<li><label for="fname">Select client to activate:</label><br/>
+					<?php echo $account_select; ?>
+					
+				</li>
+				<li>
+					<button id="wp_contactology_activate_account_submit">Activate</button>
+					<div id="loading" style="display:none; width:100%; height:100%; ">
+						<p><img src="/wp-admin/images/loading.gif" /> Please Wait</p>
+					</div>
+					<div id="wp_contactology_activate_account_results"></div>
 				</li>
 			</ul>
 		</form>

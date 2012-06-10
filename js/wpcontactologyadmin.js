@@ -44,6 +44,36 @@ jQuery(document).ready(function(){
 			
 	
 	}); //end click function
+	
+	jQuery('#wp_contactology_activate_account_submit').click( function() {
+		
+		showLoading();
+		
+		//gather variables
+		var wpcntlgy_admin_client_id = jQuery('#wp_contactology_admin_client_to_activate').val();
+		
+		//organize data for wp ajax request
+		var data = {
+			'action': 'wp_contactology_admin',
+			'type': 'activate_account',
+			'client_id': wpcntlgy_admin_client_id
+		}
+				
+		//send data to admin-ajax.php
+		jQuery.post(
+			ajaxurl, //global variable that points to admin-ajax.php
+			data, 
+			function(response)  {
+				hideLoading();
+				jQuery('#wp_contactology_activate_account_results').html(response.message);
+
+			}, "json"
+		);
+		
+		return false;
+			
+	
+	}); //end click function
 			
 	//click function that downloads file and initiates wp ajax handler
 	//TODO Fix loading graphic 
