@@ -34,7 +34,7 @@ class WP_Contactology_Post_Type {
 	 */
 	function __construct() {
 		//register an activation hook for the plugin
-		//register_activation_hook( __FILE__, array( &$this, 'install_plugin' ) );
+		register_activation_hook( __FILE__, array( &$this, 'install_plugin' ) );
 
 		//run init function
 		add_action( 'init', array( &$this, 'plugin_init' ) );
@@ -42,11 +42,15 @@ class WP_Contactology_Post_Type {
   
 	/**
 	 * Runs when the plugin is activated
-	 * TODO: Check why not working!
+	 * TODO: Why isn't rewrite flush working? Not happening at the right time? - change where require happens.
 	 */  
 	function install_plugin() {
-		// do not generate any output here
+		//add post type and taxonomy
+		$this->plugin_init();
+		//to fix permalinks
 		flush_rewrite_rules();
+		
+		// do not generate any output here
 	}
   
 	/**

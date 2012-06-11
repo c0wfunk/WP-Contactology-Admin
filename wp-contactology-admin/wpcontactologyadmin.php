@@ -1,7 +1,7 @@
 <?php
 /*
  Plugin Name: WP Contactology Admin
- Description: Creates account creation and management system for Contactology. Branched from WP Cakemail 0.91. Customized for All Star Cheer Sites
+ Description: Creates account creation and management system for Contactology. 
  Version: 0.923
  Author: Jeremy Ferguson
  */
@@ -266,7 +266,7 @@ class WP_Contactology_Admin {
 	**/	
 	function admin_init() {
         /* Register our script. */
-		wp_register_script('wp_contactology_admin_js', WP_PLUGIN_URL . '/wpcontactologyadmin/js/wpcontactologyadmin.js',
+		wp_register_script('wp_contactology_admin_js', WP_PLUGIN_URL . '/' . basename(dirname(__FILE__)) . '/js/wpcontactologyadmin.js',
 			array('jquery'));
     }
 	
@@ -470,7 +470,7 @@ class WP_Contactology_Admin {
 	function campaign_select() {
 		//start html output
 		$campaign_select .= '<select id="wp_contactology_admin_campaigns" name="wp_contactology_admin_campaigns">';
-		$campaign_select .= '<option value="0">Select a Folder</option>';
+		$campaign_select .= '<option value="0">Select a Campaign</option>';
 		//arguments for WP_Query
 		$args = ( array( 
 			'post_type' => 'campaign',
@@ -627,7 +627,7 @@ class WP_Contactology_Settings {
 	
 	/**
 	 * Creates input for settings screen
-	 *
+	 * TODO: Add save success or fail feedback
 	 * @author Jeremy Ferguson
 	 * @since 0.8
 	 * @param array callback function arguments - settings_page, settings_section, setting_name (array)
