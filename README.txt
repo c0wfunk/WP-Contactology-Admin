@@ -6,4 +6,4 @@ See https://github.com/c0wfunk/WP-Contactology-Admin/blob/master/wp-contactology
 
 See https://github.com/c0wfunk/WP-Contactology-Admin/wiki/Instructions for instructions
 
-TODO list: https://github.com/c0wfunk/WP-Contactology-Admin/wiki/TODO
+TODO: https://github.com/c0wfunk/WP-Contactology-Admin/issues
