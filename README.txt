@@ -5,4 +5,5 @@ Creates campaign post type that can be used to send autoresponder templates to c
 See https://github.com/c0wfunk/WP-Contactology-Admin/blob/master/wp-contactology-admin/README.txt for version info
 
 See https://github.com/c0wfunk/WP-Contactology-Admin/wiki/Instructions for instructions
- 
+
+TODO list: https://github.com/c0wfunk/WP-Contactology-Admin/wiki/TODO
