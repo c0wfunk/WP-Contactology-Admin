@@ -1,4 +1,9 @@
 <?php
+/**
+ * Extends Contactology API class to add Admin functions
+ * 
+ * @link     http://www.contactology.com/email-marketing-api/wrappers#PHP
+ */
 class Contactology_Admin extends Contactology {
 			
 			

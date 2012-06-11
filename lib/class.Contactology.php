@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * Contactology API class
+ * 
+ * @link     http://www.contactology.com/email-marketing-api/wrappers#PHP
+ */
 class Contactology {
 	protected $url = "api.emailcampaigns.net/2/REST/";
 	protected $key;

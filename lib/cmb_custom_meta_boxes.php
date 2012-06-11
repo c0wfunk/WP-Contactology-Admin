@@ -1,8 +1,7 @@
 <?php
 /**
  * Include and setup custom metaboxes and fields.
- *
- * @category WP_Contactology
+ * 
  * @package  Metaboxes
  * @license  http://www.opensource.org/licenses/gpl-license.php GPL v2.0 (or later)
  * @link     https://github.com/jaredatch/Custom-Metaboxes-and-Fields-for-WordPress

@@ -1,19 +1,33 @@
+/**
+ * WP Contactology Admin Javascript
+ *
+ *
+ * @name    wp-contactology-admin
+ * @author  Jeremy Ferguson
+ * @see     https://github.com/c0wfunk/WP-Contactology-Admin
+ */
 jQuery(document).ready(function(){
 
-	//functions to manage loading graphic
+	/**
+	 * Show loading graphic div
+	 */
 	function showLoading() {
 		jQuery("#loading").show();
 	}
+	/**
+	 * Hide loading graphic div
+	 */
 	function hideLoading() {
 		jQuery("#loading").hide();
 	}	
 	
-	
+	/**
+	 * Handle new client submit
+	 */
 	jQuery('#wp_contactology_new_client_submit').click( function() {
-		
+		//show loading graphic to start
 		showLoading();
-		
-		//gather variables
+		//gather variables from form values
 		var wpcntlgy_admin_client_name = jQuery('#wp_contactology_admin_client_name').val();
 		var wpcntlgy_admin_client_email = jQuery('#wp_contactology_admin_email').val();
 		var wpcntlgy_admin_client_username = jQuery('#wp_contactology_admin_username').val();
@@ -34,17 +48,20 @@ jQuery(document).ready(function(){
 			ajaxurl, //global variable that points to admin-ajax.php
 			data, 
 			function(response)  {
+				//hide loading graphic
 				hideLoading();
+				//show response
 				jQuery('#wp_contactology_client_setup_results').html(response.message);
 
 			}, "json"
 		);
-		
+		//override default click behavior
 		return false;
-			
-	
 	}); //end click function
 	
+	/**
+	 * Handle account activate submit
+	 */
 	jQuery('#wp_contactology_activate_account_submit').click( function() {
 		
 		showLoading();
@@ -64,31 +81,32 @@ jQuery(document).ready(function(){
 			ajaxurl, //global variable that points to admin-ajax.php
 			data, 
 			function(response)  {
+				//hide loading graphic
 				hideLoading();
+				//show response
 				jQuery('#wp_contactology_activate_account_results').html(response.message);
 
 			}, "json"
 		);
-		
+		//override default click behavior
 		return false;
-			
-	
 	}); //end click function
 			
-	//click function that downloads file and initiates wp ajax handler
-	//TODO Fix loading graphic 
+	/**
+	 * Handle trigger copy submit
+	 * TODO: Fix loading graphic
+	 */
 	jQuery('#wp_contactology_copy_trigger_submit').click( function() {
 		
 		showLoading();
-		
 		//get info to copy
 		var wpcntlgy_admin_folder_id = jQuery('#wp_contactology_admin_campaigns').val();
 		var wpcntlgy_admin_folder_name = jQuery('#wp_contactology_admin_campaigns option:selected').html();
 		jQuery( '#wp_contactology_current_client_checklist div'	).each(function() {
-		
+			//var strings to hold current group and checkbox 
 			var wpcntlgy_current_group = jQuery(this);
 			var wpcntlgy_current_checkbox = wpcntlgy_current_group.find('input:checkbox');
-			
+			//only if the box is checked
 			if( jQuery( wpcntlgy_current_checkbox ).is( ":checked" ) )  {
 				
 				//get current selected client info
@@ -125,21 +143,18 @@ jQuery(document).ready(function(){
 					}, "json"
 				);
 			} //end checkbox if
-			
-			
-		
 		}); //end each loop
 		
 		hideLoading();
 		return false;
 	}); //end click function
 		
-	//watches checkboxes and adds list dropdown
-	//TODO: Make it work only the first time checkbox is selected
+	/**
+	 * Handle checkbox clicks and adds list dropdown
+	 * TODO: Make it work only the first time checkbox is selected
+	 */
 	jQuery('#wp_contactology_current_client_checklist input:checkbox').click( function() {
-		
-		
-		
+		//only if the box is checked
 		if( jQuery(this).is( ":checked" ) ) {
 			var checked_box = jQuery(this);
 			//get api key from checked option
@@ -163,10 +178,8 @@ jQuery(document).ready(function(){
 				}, "json"
 			);
 			
-			
-		}
+		} //end checkbox if
 		
 	}); 
-	
 	
 }); // end document ready function
